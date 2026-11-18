@@ -1,0 +1,14 @@
+---
+description: Always rebuild and relaunch API Tester after code changes
+alwaysApply: true
+---
+
+# Re-run after updating
+
+After any code or project change to this API Tester app:
+
+1. Stop any running `ApiTester` process
+2. `dotnet build`
+3. If the build succeeds, start `.\bin\Debug\net8.0-windows\ApiTester.exe`
+
+Do this without waiting for the user to ask to run it.

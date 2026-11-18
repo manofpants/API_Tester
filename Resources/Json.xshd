@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="Json" extensions=".json" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <Color name="Digits" foreground="#098658" exampleText="42" />
+  <Color name="ValueString" foreground="#A31515" exampleText='"value"' />
+  <Color name="PropertyKey" foreground="#0451A5" exampleText='"key"' />
+  <Color name="Keywords" foreground="#0000FF" fontWeight="bold" exampleText="true" />
+  <Color name="Punctuation" foreground="#393A34" exampleText="{ }" />
+
+  <RuleSet ignoreCase="false">
+    <Keywords color="Keywords">
+      <Word>true</Word>
+      <Word>false</Word>
+      <Word>null</Word>
+    </Keywords>
+
+    <!-- Property keys: quoted string followed by colon -->
+    <Span color="PropertyKey">
+      <Begin>"(?=([^\\"]|\\.)*"\s*:)</Begin>
+      <End>"</End>
+      <RuleSet>
+        <Span begin="\\" end="." />
+      </RuleSet>
+    </Span>
+
+    <Span color="ValueString">
+      <Begin>"</Begin>
+      <End>"</End>
+      <RuleSet>
+        <Span begin="\\" end="." />
+      </RuleSet>
+    </Span>
+
+    <Rule color="Digits">
+      \b0[xX][0-9a-fA-F]+|(\b\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?
+    </Rule>
+
+    <Rule color="Punctuation">
+      [{}\[\]:,]
+    </Rule>
+  </RuleSet>
+</SyntaxDefinition>
