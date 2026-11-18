@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using ApiTester.Models;
 using ApiTester.Services;
 
@@ -13,6 +14,7 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<HeaderItem> _headers = new();
     private bool _isSending;
     private bool _sessionReady;
+    private string _themeId = AppThemes.Light.Id;
 
     public MainWindow()
     {
@@ -20,6 +22,7 @@ public partial class MainWindow : Window
         HeadersGrid.ItemsSource = _headers;
         LoadSessionOrDefaults();
         UpdateAuthPanels();
+        ApplyTheme(AppThemes.GetById(_themeId));
         _sessionReady = true;
         Deactivated += (_, _) => PersistSession();
     }
@@ -36,8 +39,12 @@ public partial class MainWindow : Window
         if (session is null)
         {
             SeedDefaultHeaders();
+            ApplyTheme(AppThemes.Light);
             return;
         }
+
+        _themeId = string.IsNullOrWhiteSpace(session.Theme) ? AppThemes.Light.Id : session.Theme;
+        ApplyWindowLayout(session);
 
         SelectMethod(session.Method);
         UrlBox.Text = session.Url ?? string.Empty;
@@ -83,6 +90,52 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ApplyWindowLayout(SavedSession session)
+    {
+        if (session.WindowWidth is > 0)
+            Width = Math.Max(MinWidth, session.WindowWidth.Value);
+        if (session.WindowHeight is > 0)
+            Height = Math.Max(MinHeight, session.WindowHeight.Value);
+
+        if (session.WindowLeft is not null && session.WindowTop is not null)
+        {
+            var left = session.WindowLeft.Value;
+            var top = session.WindowTop.Value;
+            if (IsOnScreen(left, top, Width, Height))
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual;
+                Left = left;
+                Top = top;
+            }
+        }
+
+        if (string.Equals(session.WindowState, "Maximized", StringComparison.OrdinalIgnoreCase))
+            WindowState = WindowState.Maximized;
+
+        if (session.RequestSectionHeight is > 0 && session.ResponseSectionHeight is > 0)
+        {
+            RequestSectionRow.Height = new GridLength(session.RequestSectionHeight.Value, GridUnitType.Pixel);
+            ResponseSectionRow.Height = new GridLength(session.ResponseSectionHeight.Value, GridUnitType.Pixel);
+        }
+    }
+
+    private static bool IsOnScreen(double left, double top, double width, double height)
+    {
+        var workArea = SystemParameters.VirtualScreenLeft;
+        var workTop = SystemParameters.VirtualScreenTop;
+        var workWidth = SystemParameters.VirtualScreenWidth;
+        var workHeight = SystemParameters.VirtualScreenHeight;
+
+        var right = left + width;
+        var bottom = top + height;
+
+        // Require at least part of the title bar area to be visible.
+        return right > workArea + 40 &&
+               left < workArea + workWidth - 40 &&
+               bottom > workTop + 40 &&
+               top < workTop + workHeight - 40;
+    }
+
     private void SelectMethod(string? method)
     {
         var target = string.IsNullOrWhiteSpace(method) ? "GET" : method.Trim().ToUpperInvariant();
@@ -112,6 +165,10 @@ public partial class MainWindow : Window
         else if (AuthApiKey.IsChecked == true)
             authMode = "ApiKey";
 
+        var restore = WindowState == WindowState.Normal
+            ? new Rect(Left, Top, Width, Height)
+            : RestoreBounds;
+
         return new SavedSession
         {
             Method = methodItem?.Content?.ToString() ?? "GET",
@@ -122,6 +179,18 @@ public partial class MainWindow : Window
             ApiKey = ApiKeyBox.Text ?? string.Empty,
             ApiSecret = ApiSecretBox.Text ?? string.Empty,
             ApiKeyLocation = ApiKeyLocationCombo.SelectedIndex == 1 ? "Query" : "Header",
+            WindowWidth = restore.Width,
+            WindowHeight = restore.Height,
+            WindowLeft = restore.Left,
+            WindowTop = restore.Top,
+            WindowState = WindowState.ToString(),
+            RequestSectionHeight = RequestSectionRow.ActualHeight > 0
+                ? RequestSectionRow.ActualHeight
+                : RequestSectionRow.Height.IsAbsolute ? RequestSectionRow.Height.Value : null,
+            ResponseSectionHeight = ResponseSectionRow.ActualHeight > 0
+                ? ResponseSectionRow.ActualHeight
+                : ResponseSectionRow.Height.IsAbsolute ? ResponseSectionRow.Height.Value : null,
+            Theme = _themeId,
             Headers = _headers.Select(h => new SavedHeader
             {
                 Enabled = h.Enabled,
@@ -129,6 +198,54 @@ public partial class MainWindow : Window
                 Value = h.Value ?? string.Empty
             }).ToList()
         };
+    }
+
+    private void SettingsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var settings = new SettingsWindow(
+            _themeId,
+            themeId =>
+            {
+                _themeId = themeId;
+                ApplyTheme(AppThemes.GetById(themeId));
+                PersistSession();
+            },
+            AppThemes.GetById(_themeId))
+        {
+            Owner = this
+        };
+
+        settings.ShowDialog();
+    }
+
+    private void ApplyTheme(AppTheme theme)
+    {
+        SetBrush("WindowBackgroundBrush", theme.WindowBackground);
+        SetBrush("PanelBackgroundBrush", theme.PanelBackground);
+        SetBrush("SurfaceBackgroundBrush", theme.SurfaceBackground);
+        SetBrush("StatusBackgroundBrush", theme.StatusBackground);
+        SetBrush("PrimaryTextBrush", theme.PrimaryText);
+        SetBrush("SecondaryTextBrush", theme.SecondaryText);
+        SetBrush("AccentBrush", theme.Accent);
+        SetBrush("AccentTextBrush", theme.AccentText);
+        SetBrush("BorderBrushTheme", theme.Border);
+        SetBrush("SplitterBrush", theme.Splitter);
+        SetBrush("ControlBackgroundBrush", theme.ControlBackground);
+        SetBrush("ControlBorderBrush", theme.ControlBorder);
+
+        Background = theme.WindowBackgroundBrush;
+        SendButton.Background = theme.AccentBrush;
+        SendButton.Foreground = theme.AccentTextBrush;
+        ResponseBodyEditor.Foreground = theme.PrimaryTextBrush;
+        ResponseBodyEditor.Background = Brushes.Transparent;
+        ResponseBodyEditor.LineNumbersForeground = theme.SecondaryTextBrush;
+    }
+
+    private void SetBrush(string key, Color color)
+    {
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        Resources[key] = brush;
     }
 
     private void PersistSession()

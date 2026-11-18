@@ -1,0 +1,94 @@
+<Window x:Class="ApiTester.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings"
+        Width="440"
+        Height="460"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource SettingsWindowBackground}"
+        Foreground="{DynamicResource SettingsPrimaryText}">
+    <Window.Resources>
+        <SolidColorBrush x:Key="SettingsWindowBackground" Color="#F4F5F7"/>
+        <SolidColorBrush x:Key="SettingsPrimaryText" Color="#1F2937"/>
+        <SolidColorBrush x:Key="SettingsSecondaryText" Color="#555555"/>
+        <SolidColorBrush x:Key="SettingsAccent" Color="#2563EB"/>
+        <SolidColorBrush x:Key="SettingsAccentText" Color="#FFFFFF"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsPrimaryText}"/>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource SettingsPrimaryText}"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="20">
+        <DockPanel DockPanel.Dock="Bottom" LastChildFill="False" Margin="0,16,0,0">
+            <Button x:Name="CloseButton"
+                    DockPanel.Dock="Right"
+                    Content="Close"
+                    MinWidth="88"
+                    Padding="14,6"
+                    IsCancel="True"
+                    IsDefault="True"
+                    Background="{DynamicResource SettingsAccent}"
+                    Foreground="{DynamicResource SettingsAccentText}"
+                    BorderThickness="0"
+                    Click="CloseButton_Click"/>
+        </DockPanel>
+
+        <StackPanel>
+            <TextBlock x:Name="ThemeTitle"
+                       Text="Color theme"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,6"
+                       Foreground="{DynamicResource SettingsPrimaryText}"/>
+            <TextBlock x:Name="ThemeHint"
+                       Text="Choose a UI theme for the app."
+                       FontSize="12"
+                       Margin="0,0,0,14"
+                       Foreground="{DynamicResource SettingsSecondaryText}"/>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                <ItemsControl x:Name="ThemeList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <RadioButton GroupName="ThemeGroup"
+                                         Margin="0,0,0,12"
+                                         Padding="4"
+                                         Foreground="{DynamicResource SettingsPrimaryText}"
+                                         IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                         Checked="ThemeRadio_Checked"
+                                         Tag="{Binding Id}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Name}"
+                                               FontWeight="SemiBold"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource SettingsPrimaryText}"/>
+                                    <TextBlock Text="{Binding Description}"
+                                               FontSize="12"
+                                               Margin="0,2,0,0"
+                                               Foreground="{DynamicResource SettingsSecondaryText}"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                        <Border Width="22" Height="22" CornerRadius="4" Margin="0,0,6,0"
+                                                Background="{Binding Swatch1}" BorderBrush="#88000000" BorderThickness="1"/>
+                                        <Border Width="22" Height="22" CornerRadius="4" Margin="0,0,6,0"
+                                                Background="{Binding Swatch2}" BorderBrush="#88000000" BorderThickness="1"/>
+                                        <Border Width="22" Height="22" CornerRadius="4" Margin="0,0,6,0"
+                                                Background="{Binding Swatch3}" BorderBrush="#88000000" BorderThickness="1"/>
+                                        <Border Width="22" Height="22" CornerRadius="4"
+                                                Background="{Binding Swatch4}" BorderBrush="#88000000" BorderThickness="1"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </RadioButton>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+    </DockPanel>
+</Window>

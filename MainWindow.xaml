@@ -10,23 +10,47 @@
         Width="960"
         MinHeight="520"
         MinWidth="720"
-        Background="#F4F5F7"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Icon="pack://application:,,,/Resources/app.ico"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F4F5F7"/>
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#EEF1F5"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F2937"/>
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#555555"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#2563EB"/>
+        <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderBrushTheme" Color="#D0D4DB"/>
+        <SolidColorBrush x:Key="SplitterBrush" Color="#D0D4DB"/>
+        <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="ControlBorderBrush" Color="#C5C9D0"/>
+
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="FontFamily" Value="Consolas"/>
             <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource PrimaryTextBrush}"/>
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
         </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="16,6"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
         </Style>
         <Style TargetType="DataGrid">
             <Setter Property="FontFamily" Value="Consolas"/>
@@ -37,25 +61,68 @@
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="RowBackground" Value="{DynamicResource SurfaceBackgroundBrush}"/>
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource StatusBackgroundBrush}"/>
+        </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushTheme}"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
         </Style>
         <Style x:Key="SectionLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style x:Key="PanelTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTip" Value="Settings"/>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="12">
+    <Grid x:Name="LayoutRoot" Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*" MinHeight="180"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition x:Name="RequestSectionRow" Height="*" MinHeight="180"/>
             <RowDefinition Height="6"/>
-            <RowDefinition Height="*" MinHeight="180"/>
+            <RowDefinition x:Name="ResponseSectionRow" Height="*" MinHeight="180"/>
         </Grid.RowDefinitions>
 
+        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
+            <Button x:Name="SettingsButton"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource IconButton}"
+                    Content="&#xE713;"
+                    Click="SettingsButton_Click"/>
+            <TextBlock Style="{StaticResource PanelTitle}" Text="Request" Margin="0"/>
+        </DockPanel>
+
         <!-- Request bar -->
-        <Grid Grid.Row="0" Margin="0,0,0,10">
+        <Grid Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="110"/>
                 <ColumnDefinition Width="*"/>
@@ -84,15 +151,15 @@
                     Content="Send"
                     MinWidth="88"
                     Click="SendButton_Click"
-                    Background="#2563EB"
-                    Foreground="White"
+                    Background="{DynamicResource AccentBrush}"
+                    Foreground="{DynamicResource AccentTextBrush}"
                     BorderThickness="0"/>
         </Grid>
 
         <!-- Request tabs -->
-        <TabControl x:Name="RequestTabs" Grid.Row="1" Margin="0,0,0,4" Background="White">
+        <TabControl x:Name="RequestTabs" Grid.Row="2" Margin="0,0,0,4">
             <TabItem Header="Headers">
-                <DockPanel>
+                <DockPanel Background="{DynamicResource SurfaceBackgroundBrush}">
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="8">
                         <Button Content="Add header" Click="AddHeader_Click" Margin="0,0,8,0" Padding="10,4"/>
                         <Button Content="Remove selected" Click="RemoveHeader_Click" Padding="10,4"/>
@@ -118,11 +185,12 @@
                          VerticalScrollBarVisibility="Auto"
                          HorizontalScrollBarVisibility="Auto"
                          BorderThickness="0"
-                         Margin="4"/>
+                         Margin="4"
+                         Background="{DynamicResource SurfaceBackgroundBrush}"/>
             </TabItem>
 
             <TabItem Header="Auth">
-                <StackPanel Margin="16">
+                <StackPanel Margin="16" Background="{DynamicResource SurfaceBackgroundBrush}">
                     <TextBlock Style="{StaticResource SectionLabel}" Text="Auth type"/>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                         <RadioButton x:Name="AuthNone"
@@ -159,16 +227,21 @@
             </TabItem>
         </TabControl>
 
-        <GridSplitter Grid.Row="2"
+        <GridSplitter x:Name="SectionSplitter"
+                      Grid.Row="3"
                       Height="6"
                       HorizontalAlignment="Stretch"
-                      Background="#D0D4DB"
+                      Background="{DynamicResource SplitterBrush}"
                       ResizeDirection="Rows"/>
 
         <!-- Response panel -->
-        <DockPanel Grid.Row="3" Margin="0,4,0,0">
-            <Border DockPanel.Dock="Top"
-                    Background="#EEF1F5"
+        <DockPanel Grid.Row="4" Margin="0,4,0,0">
+            <TextBlock DockPanel.Dock="Top"
+                       Style="{StaticResource PanelTitle}"
+                       Text="Response"/>
+            <Border x:Name="ResponseStatusBorder"
+                    DockPanel.Dock="Top"
+                    Background="{DynamicResource StatusBackgroundBrush}"
                     Padding="10,8"
                     CornerRadius="4"
                     Margin="0,0,0,6">
@@ -176,22 +249,24 @@
                            Text="Ready"
                            FontFamily="Consolas"
                            FontSize="13"
-                           Foreground="#333"/>
+                           Foreground="{DynamicResource PrimaryTextBrush}"/>
             </Border>
 
-            <TabControl Background="White">
+            <TabControl x:Name="ResponseTabs">
                 <TabItem Header="Body">
-                    <avalonedit:TextEditor x:Name="ResponseBodyEditor"
-                                           IsReadOnly="True"
-                                           ShowLineNumbers="True"
-                                           WordWrap="True"
-                                           FontFamily="Consolas"
-                                           FontSize="13"
-                                           BorderThickness="0"
-                                           Margin="4"
-                                           Background="Transparent"
-                                           HorizontalScrollBarVisibility="Auto"
-                                           VerticalScrollBarVisibility="Auto"/>
+                    <Border Background="{DynamicResource SurfaceBackgroundBrush}">
+                        <avalonedit:TextEditor x:Name="ResponseBodyEditor"
+                                               IsReadOnly="True"
+                                               ShowLineNumbers="True"
+                                               WordWrap="True"
+                                               FontFamily="Consolas"
+                                               FontSize="13"
+                                               BorderThickness="0"
+                                               Margin="4"
+                                               Background="Transparent"
+                                               HorizontalScrollBarVisibility="Auto"
+                                               VerticalScrollBarVisibility="Auto"/>
+                    </Border>
                 </TabItem>
                 <TabItem Header="Headers">
                     <TextBox x:Name="ResponseHeadersBox"
@@ -202,7 +277,7 @@
                              HorizontalScrollBarVisibility="Auto"
                              BorderThickness="0"
                              Margin="4"
-                             Background="Transparent"/>
+                             Background="{DynamicResource SurfaceBackgroundBrush}"/>
                 </TabItem>
             </TabControl>
         </DockPanel>

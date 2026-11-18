@@ -22,6 +22,15 @@ public sealed class SavedSession
     public string ApiKey { get; set; } = string.Empty;
     public string ApiSecret { get; set; } = string.Empty;
     public string ApiKeyLocation { get; set; } = "Header";
+
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public string? WindowState { get; set; }
+    public double? RequestSectionHeight { get; set; }
+    public double? ResponseSectionHeight { get; set; }
+    public string Theme { get; set; } = "light";
 }
 
 public static class SessionStore
