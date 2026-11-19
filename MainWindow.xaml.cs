@@ -317,12 +317,26 @@ public partial class MainWindow : Window
             SetUpdateButtonIdle();
             if (!silent)
             {
-                ThemedMessageWindow.Show(
-                    this,
-                    "Updates",
-                    "You're up to date",
-                    $"API Tester v{result.CurrentVersion} is the latest version.",
-                    AppThemes.GetById(_themeId));
+                // Newer release exists but no downloadable asset matched (shouldn't say "up to date").
+                if (!string.IsNullOrWhiteSpace(result.LatestVersion) &&
+                    !string.IsNullOrWhiteSpace(result.ErrorMessage))
+                {
+                    ThemedMessageWindow.Show(
+                        this,
+                        "Updates",
+                        "Update found, but download is unavailable",
+                        result.ErrorMessage,
+                        AppThemes.GetById(_themeId));
+                }
+                else
+                {
+                    ThemedMessageWindow.Show(
+                        this,
+                        "Updates",
+                        "You're up to date",
+                        $"API Tester v{result.CurrentVersion} is the latest version.",
+                        AppThemes.GetById(_themeId));
+                }
             }
         }
         catch (Exception ex)
@@ -366,6 +380,7 @@ public partial class MainWindow : Window
         {
             var progress = new Progress<string>(status => UpdateButton.Content = status);
             await _updateService.ApplyUpdateAsync(update.DownloadUrl, progress);
+            // Helper process is already running and waiting for this PID to exit.
             Application.Current.Shutdown();
         }
         catch (Exception ex)

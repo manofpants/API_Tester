@@ -148,46 +148,64 @@ public sealed class UpdateService : IDisposable
 
             File.Copy(newExe, stagingExe, overwrite: true);
 
-            var scriptPath = Path.Combine(appDir, "apply-update.cmd");
+            // PowerShell helper avoids cmd "timeout" failing when no console is attached.
+            var scriptPath = Path.Combine(appDir, "apply-update.ps1");
             var logPath = Path.Combine(appDir, "update.log");
             var pid = Environment.ProcessId;
 
             var script = $$"""
-                @echo off
-                setlocal
-                set "TARGET={{currentExe}}"
-                set "NEW={{stagingExe}}"
-                set "LOG={{logPath}}"
-                echo [%date% %time%] Waiting for process {{pid}} to exit>>"%LOG%"
-                :wait
-                tasklist /FI "PID eq {{pid}}" | find "{{pid}}" >nul
-                if not errorlevel 1 (
-                  timeout /t 1 /nobreak >nul
-                  goto wait
-                )
-                echo [%date% %time%] Replacing executable>>"%LOG%"
-                :retry
-                move /Y "%NEW%" "%TARGET%" >nul 2>&1
-                if errorlevel 1 (
-                  timeout /t 1 /nobreak >nul
-                  goto retry
-                )
-                echo [%date% %time%] Starting updated app>>"%LOG%"
-                start "" "%TARGET%"
-                del "%~f0"
+                $ErrorActionPreference = 'Continue'
+                $target = '{{EscapeForPowerShellSingleQuoted(currentExe)}}'
+                $new = '{{EscapeForPowerShellSingleQuoted(stagingExe)}}'
+                $log = '{{EscapeForPowerShellSingleQuoted(logPath)}}'
+                $pidToWait = {{pid}}
+                function Write-Log([string]$message) {
+                  Add-Content -Path $log -Value ("[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $message)
+                }
+                Write-Log "Updater started. Waiting for PID $pidToWait to exit."
+                while (Get-Process -Id $pidToWait -ErrorAction SilentlyContinue) {
+                  Start-Sleep -Milliseconds 400
+                }
+                Write-Log "Process exited. Replacing executable."
+                $replaced = $false
+                for ($i = 0; $i -lt 30; $i++) {
+                  try {
+                    Copy-Item -LiteralPath $new -Destination $target -Force
+                    Remove-Item -LiteralPath $new -Force -ErrorAction SilentlyContinue
+                    $replaced = $true
+                    break
+                  } catch {
+                    Write-Log ("Replace attempt failed: " + $_.Exception.Message)
+                    Start-Sleep -Milliseconds 500
+                  }
+                }
+                if (-not $replaced) {
+                  Write-Log "Failed to replace executable after retries."
+                  exit 1
+                }
+                Write-Log "Starting updated app."
+                Start-Process -FilePath $target
+                Write-Log "Updater finished."
+                Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
                 """;
 
-            await File.WriteAllTextAsync(scriptPath, script, cancellationToken);
+            await File.WriteAllTextAsync(scriptPath, script, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: false), cancellationToken);
 
             progress?.Report("Restarting…");
-            Process.Start(new ProcessStartInfo
+            var started = Process.Start(new ProcessStartInfo
             {
-                FileName = scriptPath,
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{scriptPath}\"",
                 WorkingDirectory = appDir,
-                UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
+                UseShellExecute = false,
                 CreateNoWindow = true
             });
+
+            if (started is null)
+                throw new InvalidOperationException("Could not start the update helper process.");
+
+            // Give the helper a moment to attach before this process exits.
+            await Task.Delay(500, cancellationToken);
         }
         finally
         {
@@ -202,6 +220,9 @@ public sealed class UpdateService : IDisposable
             }
         }
     }
+
+    private static string EscapeForPowerShellSingleQuoted(string value) =>
+        value.Replace("'", "''", StringComparison.Ordinal);
 
     private static string? FindReleaseAssetUrl(JsonElement root, string latestVersion)
     {

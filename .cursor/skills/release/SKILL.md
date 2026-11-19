@@ -99,8 +99,14 @@ Do **not** use the legacy unversioned name `API_Tester-win-x64.zip`.
 
 Write release notes from the commits/changes since the previous tag (features, fixes, UX). Keep them scannable.
 
+Also attach a legacy copy named `API_Tester-win-x64.zip` so older app builds (≤1.1.0) can still find the download:
+
 ```powershell
-gh release create vX.Y.Z .\API_Tester-win-x64-vX.Y.Z.zip `
+Copy-Item .\API_Tester-win-x64-vX.Y.Z.zip .\API_Tester-win-x64.zip -Force
+
+gh release create vX.Y.Z `
+  .\API_Tester-win-x64-vX.Y.Z.zip `
+  .\API_Tester-win-x64.zip `
   --title "API Tester vX.Y.Z" `
   --notes @"
 ## What's new
@@ -112,7 +118,7 @@ No .NET install required. If SmartScreen appears: More info → Run anyway.
 "@
 ```
 
-Notes body is shown in the app’s update confirmation modal — keep it clear and useful.
+Primary asset must remain the versioned zip. Notes body is shown in the app’s update confirmation modal — keep it clear and useful.
 
 ### 6. Return the release URL
 
