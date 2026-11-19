@@ -296,12 +296,12 @@ public partial class MainWindow : Window
                 SetUpdateButtonIdle();
                 if (!silent)
                 {
-                    MessageBox.Show(
+                    ThemedMessageWindow.Show(
                         this,
-                        result.ErrorMessage ?? "Could not check for updates.",
                         "Updates",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                        "Update check failed",
+                        result.ErrorMessage ?? "Could not check for updates.",
+                        AppThemes.GetById(_themeId));
                 }
 
                 return;
@@ -317,12 +317,12 @@ public partial class MainWindow : Window
             SetUpdateButtonIdle();
             if (!silent)
             {
-                MessageBox.Show(
+                ThemedMessageWindow.Show(
                     this,
-                    $"You're up to date (v{result.CurrentVersion}).",
                     "Updates",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                    "You're up to date",
+                    $"API Tester v{result.CurrentVersion} is the latest version.",
+                    AppThemes.GetById(_themeId));
             }
         }
         catch (Exception ex)
@@ -330,12 +330,12 @@ public partial class MainWindow : Window
             SetUpdateButtonIdle();
             if (!silent)
             {
-                MessageBox.Show(
+                ThemedMessageWindow.Show(
                     this,
-                    ex.Message,
                     "Updates",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Warning);
+                    "Update check failed",
+                    ex.Message,
+                    AppThemes.GetById(_themeId));
             }
         }
         finally

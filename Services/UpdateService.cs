@@ -25,7 +25,8 @@ public sealed class UpdateService : IDisposable
 {
     private const string Owner = "manofpants";
     private const string Repo = "API_Tester";
-    private const string AssetName = "API_Tester-win-x64.zip";
+    private const string AssetPrefix = "API_Tester-win-x64";
+    private const string LegacyAssetName = "API_Tester-win-x64.zip";
 
     private readonly HttpClient _http = new()
     {
@@ -79,20 +80,7 @@ public sealed class UpdateService : IDisposable
             var releaseName = root.TryGetProperty("name", out var nameEl) ? nameEl.GetString() : null;
             var releaseNotes = root.TryGetProperty("body", out var bodyEl) ? bodyEl.GetString() : null;
 
-            string? downloadUrl = null;
-            if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var asset in assets.EnumerateArray())
-                {
-                    var name = asset.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
-                    if (string.Equals(name, AssetName, StringComparison.OrdinalIgnoreCase) &&
-                        asset.TryGetProperty("browser_download_url", out var urlProp))
-                    {
-                        downloadUrl = urlProp.GetString();
-                        break;
-                    }
-                }
-            }
+            var downloadUrl = FindReleaseAssetUrl(root, latest);
 
             var updateAvailable = IsNewer(latest, current) && !string.IsNullOrWhiteSpace(downloadUrl);
 
@@ -111,7 +99,7 @@ public sealed class UpdateService : IDisposable
                 ErrorMessage = updateAvailable || !string.IsNullOrWhiteSpace(downloadUrl)
                     ? null
                     : string.IsNullOrWhiteSpace(downloadUrl)
-                        ? $"Latest release ({latest}) has no {AssetName} asset."
+                        ? $"Latest release ({latest}) has no {AssetPrefix}-v{{version}}.zip asset."
                         : null
             };
         }
@@ -138,7 +126,7 @@ public sealed class UpdateService : IDisposable
             ?? throw new InvalidOperationException("Could not locate the application folder.");
 
         var tempRoot = Path.Combine(Path.GetTempPath(), "ApiTesterUpdate", Guid.NewGuid().ToString("N"));
-        var zipPath = Path.Combine(tempRoot, AssetName);
+        var zipPath = Path.Combine(tempRoot, "update.zip");
         var extractDir = Path.Combine(tempRoot, "extract");
         Directory.CreateDirectory(extractDir);
 
@@ -213,6 +201,47 @@ public sealed class UpdateService : IDisposable
                 // Best-effort cleanup; updater no longer needs the temp extract once staged.
             }
         }
+    }
+
+    private static string? FindReleaseAssetUrl(JsonElement root, string latestVersion)
+    {
+        if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
+            return null;
+
+        var preferredNames = new[]
+        {
+            $"{AssetPrefix}-v{latestVersion}.zip",
+            $"{AssetPrefix}-{latestVersion}.zip",
+            LegacyAssetName
+        };
+
+        foreach (var preferred in preferredNames)
+        {
+            foreach (var asset in assets.EnumerateArray())
+            {
+                var name = asset.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+                if (string.Equals(name, preferred, StringComparison.OrdinalIgnoreCase) &&
+                    asset.TryGetProperty("browser_download_url", out var urlProp))
+                {
+                    return urlProp.GetString();
+                }
+            }
+        }
+
+        // Fallback: any API_Tester-win-x64*.zip on the release.
+        foreach (var asset in assets.EnumerateArray())
+        {
+            var name = asset.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+            if (!string.IsNullOrWhiteSpace(name) &&
+                name.StartsWith(AssetPrefix, StringComparison.OrdinalIgnoreCase) &&
+                name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) &&
+                asset.TryGetProperty("browser_download_url", out var urlProp))
+            {
+                return urlProp.GetString();
+            }
+        }
+
+        return null;
     }
 
     private async Task DownloadFileAsync(string url, string destinationPath, CancellationToken cancellationToken)

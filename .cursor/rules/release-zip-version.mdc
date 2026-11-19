@@ -1,0 +1,20 @@
+---
+description: Name release zip files with the version number
+alwaysApply: true
+---
+
+# Release zip naming
+
+When creating a GitHub release for API Tester:
+
+1. Name the download zip with the version, e.g. `API_Tester-win-x64-v1.2.0.zip`
+2. Do **not** use the unversioned name `API_Tester-win-x64.zip` for new releases
+3. Keep the tag as `vX.Y.Z` matching the zip version and `ApiTester.csproj` `<Version>`
+4. The zip should still contain `ApiTester.exe` at the top level
+
+Example:
+
+```powershell
+Compress-Archive -Path .\publish\ApiTester.exe -DestinationPath .\API_Tester-win-x64-v1.2.0.zip -Force
+gh release create v1.2.0 .\API_Tester-win-x64-v1.2.0.zip --title "API Tester v1.2.0" --notes "..."
+```

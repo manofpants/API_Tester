@@ -1,0 +1,46 @@
+<Window x:Class="ApiTester.ThemedMessageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="420"
+        SizeToContent="Height"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource MsgWindowBackground}">
+    <Window.Resources>
+        <SolidColorBrush x:Key="MsgWindowBackground" Color="#F4F5F7"/>
+        <SolidColorBrush x:Key="MsgPrimaryText" Color="#1F2937"/>
+        <SolidColorBrush x:Key="MsgSecondaryText" Color="#555555"/>
+        <SolidColorBrush x:Key="MsgAccent" Color="#2563EB"/>
+        <SolidColorBrush x:Key="MsgAccentText" Color="#FFFFFF"/>
+    </Window.Resources>
+
+    <DockPanel Margin="20">
+        <DockPanel DockPanel.Dock="Bottom" LastChildFill="False" Margin="0,20,0,0">
+            <Button x:Name="CloseButton"
+                    DockPanel.Dock="Right"
+                    Content="Close"
+                    MinWidth="88"
+                    Padding="14,6"
+                    IsCancel="True"
+                    IsDefault="True"
+                    Background="{DynamicResource MsgAccent}"
+                    Foreground="{DynamicResource MsgAccentText}"
+                    BorderThickness="0"
+                    Click="CloseButton_Click"/>
+        </DockPanel>
+
+        <StackPanel>
+            <TextBlock x:Name="HeadingText"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,8"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource MsgPrimaryText}"/>
+            <TextBlock x:Name="BodyText"
+                       FontSize="13"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource MsgSecondaryText}"/>
+        </StackPanel>
+    </DockPanel>
+</Window>
