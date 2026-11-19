@@ -14,18 +14,23 @@
         Icon="pack://application:,,,/Resources/app.ico"
         PreviewKeyDown="Window_PreviewKeyDown">
     <Window.Resources>
-        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F4F5F7"/>
-        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFF"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#E8F1F5"/>
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#F7FBFC"/>
         <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#EEF1F5"/>
-        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F2937"/>
-        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#555555"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#2563EB"/>
+        <SolidColorBrush x:Key="StatusBackgroundBrush" Color="#D7E8EF"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1A333F"/>
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#4A6A78"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#0D9488"/>
         <SolidColorBrush x:Key="AccentTextBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="BorderBrushTheme" Color="#D0D4DB"/>
-        <SolidColorBrush x:Key="SplitterBrush" Color="#D0D4DB"/>
+        <SolidColorBrush x:Key="BorderBrushTheme" Color="#B7CFD9"/>
+        <SolidColorBrush x:Key="SplitterBrush" Color="#B7CFD9"/>
         <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="ControlBorderBrush" Color="#C5C9D0"/>
+        <SolidColorBrush x:Key="ControlBorderBrush" Color="#A8C2CD"/>
 
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="6,4"/>
@@ -35,14 +40,6 @@
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
             <Setter Property="CaretBrush" Value="{DynamicResource PrimaryTextBrush}"/>
-        </Style>
-        <Style TargetType="ComboBox">
-            <Setter Property="Padding" Value="6,4"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
         </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="16,6"/>
@@ -61,17 +58,37 @@
             <Setter Property="HeadersVisibility" Value="Column"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowHeight" Value="28"/>
+            <Setter Property="ColumnHeaderHeight" Value="28"/>
             <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
             <Setter Property="RowBackground" Value="{DynamicResource SurfaceBackgroundBrush}"/>
             <Setter Property="AlternatingRowBackground" Value="{DynamicResource StatusBackgroundBrush}"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BorderBrushTheme}"/>
+            <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource BorderBrushTheme}"/>
         </Style>
-        <Style TargetType="TabControl">
-            <Setter Property="Background" Value="{DynamicResource PanelBackgroundBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrushTheme}"/>
-        </Style>
-        <Style TargetType="TabItem">
+        <Style TargetType="DataGridCell">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        </Style>
+        <Style x:Key="HeaderCellText" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+        </Style>
+        <Style x:Key="HeaderCellTextBox" TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4,0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource PrimaryTextBrush}"/>
         </Style>
         <Style TargetType="RadioButton">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
@@ -101,6 +118,19 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="ToolTip" Value="Settings"/>
         </Style>
+        <Style x:Key="UpdateButton" TargetType="Button">
+            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid x:Name="LayoutRoot" Margin="12">
@@ -118,6 +148,11 @@
                     Style="{StaticResource IconButton}"
                     Content="&#xE713;"
                     Click="SettingsButton_Click"/>
+            <Button x:Name="UpdateButton"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource UpdateButton}"
+                    Content="Check for updates"
+                    Click="UpdateButton_Click"/>
             <TextBlock Style="{StaticResource PanelTitle}" Text="Request" Margin="0"/>
         </DockPanel>
 
@@ -140,11 +175,17 @@
                 <ComboBoxItem Content="DELETE"/>
             </ComboBox>
 
-            <TextBox x:Name="UrlBox"
-                     Grid.Column="1"
-                     Margin="0,0,8,0"
-                     VerticalContentAlignment="Center"
-                     Text="https://api.example.com/endpoint"/>
+            <ComboBox x:Name="UrlBox"
+                      Grid.Column="1"
+                      Margin="0,0,8,0"
+                      IsEditable="True"
+                      IsTextSearchEnabled="False"
+                      StaysOpenOnEdit="True"
+                      VerticalContentAlignment="Center"
+                      FontFamily="Consolas"
+                      FontSize="13"
+                      ToolTip="URL history (last 20)"
+                      Text="https://api.example.com/endpoint"/>
 
             <Button x:Name="SendButton"
                     Grid.Column="2"
@@ -161,32 +202,85 @@
             <TabItem Header="Headers">
                 <DockPanel Background="{DynamicResource SurfaceBackgroundBrush}">
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="8">
-                        <Button Content="Add header" Click="AddHeader_Click" Margin="0,0,8,0" Padding="10,4"/>
-                        <Button Content="Remove selected" Click="RemoveHeader_Click" Padding="10,4"/>
+                        <Button Content="Add header" Click="AddHeader_Click" Padding="10,4"/>
                     </StackPanel>
                     <DataGrid x:Name="HeadersGrid"
                               Margin="4"
                               ItemsSource="{Binding}"
-                              SelectionMode="Single">
+                              SelectionMode="Single"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              RowHeight="28">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
-                            <DataGridTextColumn Header="Key" Binding="{Binding Key, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-                            <DataGridTextColumn Header="Value" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="2*"/>
+                            <DataGridCheckBoxColumn Header="" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="36">
+                                <DataGridCheckBoxColumn.ElementStyle>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridCheckBoxColumn.ElementStyle>
+                                <DataGridCheckBoxColumn.EditingElementStyle>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </DataGridCheckBoxColumn.EditingElementStyle>
+                            </DataGridCheckBoxColumn>
+                            <DataGridTextColumn Header="Key" Binding="{Binding Key, UpdateSourceTrigger=PropertyChanged}" Width="*"
+                                                ElementStyle="{StaticResource HeaderCellText}"
+                                                EditingElementStyle="{StaticResource HeaderCellTextBox}"/>
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Width="2*"
+                                                ElementStyle="{StaticResource HeaderCellText}"
+                                                EditingElementStyle="{StaticResource HeaderCellTextBox}"/>
+                            <DataGridTemplateColumn Header="" Width="32" CanUserResize="False" CanUserSort="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="&#xE74D;"
+                                                FontFamily="Segoe MDL2 Assets"
+                                                FontSize="12"
+                                                Width="24"
+                                                Height="22"
+                                                Padding="0"
+                                                BorderThickness="0"
+                                                Background="Transparent"
+                                                Cursor="Hand"
+                                                ToolTip="Delete header"
+                                                Click="DeleteHeaderRow_Click"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility" Value="Hidden"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
             </TabItem>
 
             <TabItem Header="Body">
-                <TextBox x:Name="BodyBox"
-                         AcceptsReturn="True"
-                         AcceptsTab="True"
-                         TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto"
-                         HorizontalScrollBarVisibility="Auto"
-                         BorderThickness="0"
-                         Margin="4"
-                         Background="{DynamicResource SurfaceBackgroundBrush}"/>
+                <Border Background="{DynamicResource SurfaceBackgroundBrush}">
+                    <avalonedit:TextEditor x:Name="BodyEditor"
+                                           ShowLineNumbers="True"
+                                           WordWrap="True"
+                                           FontFamily="Consolas"
+                                           FontSize="13"
+                                           BorderThickness="0"
+                                           Margin="4"
+                                           Background="Transparent"
+                                           HorizontalScrollBarVisibility="Auto"
+                                           VerticalScrollBarVisibility="Auto"/>
+                </Border>
             </TabItem>
 
             <TabItem Header="Auth">

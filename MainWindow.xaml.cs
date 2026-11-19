@@ -10,21 +10,32 @@ namespace ApiTester;
 
 public partial class MainWindow : Window
 {
+    private const int MaxUrlHistory = 20;
+
     private readonly HttpRequestService _httpService = new();
+    private readonly UpdateService _updateService = new();
     private readonly ObservableCollection<HeaderItem> _headers = new();
+    private readonly ObservableCollection<string> _urlHistory = new();
     private bool _isSending;
     private bool _sessionReady;
-    private string _themeId = AppThemes.Light.Id;
+    private bool _updateBusy;
+    private string _themeId = AppThemes.Default.Id;
+    private UpdateCheckResult? _pendingUpdate;
 
     public MainWindow()
     {
         InitializeComponent();
+        Title = $"API Tester v{UpdateService.GetCurrentVersion()}";
         HeadersGrid.ItemsSource = _headers;
+        UrlBox.ItemsSource = _urlHistory;
         LoadSessionOrDefaults();
         UpdateAuthPanels();
         ApplyTheme(AppThemes.GetById(_themeId));
+        RefreshBodyHighlighting();
+        BodyEditor.TextChanged += (_, _) => RefreshBodyHighlighting();
         _sessionReady = true;
         Deactivated += (_, _) => PersistSession();
+        Loaded += async (_, _) => await CheckForUpdatesAsync(silent: true);
     }
 
     private void SeedDefaultHeaders()
@@ -39,16 +50,17 @@ public partial class MainWindow : Window
         if (session is null)
         {
             SeedDefaultHeaders();
-            ApplyTheme(AppThemes.Light);
+            ApplyTheme(AppThemes.Default);
             return;
         }
 
-        _themeId = string.IsNullOrWhiteSpace(session.Theme) ? AppThemes.Light.Id : session.Theme;
+        _themeId = string.IsNullOrWhiteSpace(session.Theme) ? AppThemes.Default.Id : session.Theme;
         ApplyWindowLayout(session);
 
         SelectMethod(session.Method);
+        LoadUrlHistory(session.UrlHistory);
         UrlBox.Text = session.Url ?? string.Empty;
-        BodyBox.Text = session.Body ?? string.Empty;
+        BodyEditor.Text = session.Body ?? string.Empty;
         BearerTokenBox.Text = session.BearerToken ?? string.Empty;
         ApiKeyBox.Text = session.ApiKey ?? string.Empty;
         ApiSecretBox.Text = session.ApiSecret ?? string.Empty;
@@ -173,7 +185,7 @@ public partial class MainWindow : Window
         {
             Method = methodItem?.Content?.ToString() ?? "GET",
             Url = UrlBox.Text ?? string.Empty,
-            Body = BodyBox.Text ?? string.Empty,
+            Body = BodyEditor.Text ?? string.Empty,
             AuthMode = authMode,
             BearerToken = BearerTokenBox.Text ?? string.Empty,
             ApiKey = ApiKeyBox.Text ?? string.Empty,
@@ -191,6 +203,7 @@ public partial class MainWindow : Window
                 ? ResponseSectionRow.ActualHeight
                 : ResponseSectionRow.Height.IsAbsolute ? ResponseSectionRow.Height.Value : null,
             Theme = _themeId,
+            UrlHistory = _urlHistory.ToList(),
             Headers = _headers.Select(h => new SavedHeader
             {
                 Enabled = h.Enabled,
@@ -198,6 +211,39 @@ public partial class MainWindow : Window
                 Value = h.Value ?? string.Empty
             }).ToList()
         };
+    }
+
+    private void LoadUrlHistory(IEnumerable<string>? urls)
+    {
+        _urlHistory.Clear();
+        if (urls is null)
+            return;
+
+        foreach (var url in urls
+                     .Where(u => !string.IsNullOrWhiteSpace(u))
+                     .Select(u => u.Trim())
+                     .Distinct(StringComparer.OrdinalIgnoreCase)
+                     .Take(MaxUrlHistory))
+        {
+            _urlHistory.Add(url);
+        }
+    }
+
+    private void RememberUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            return;
+
+        var trimmed = url.Trim();
+        for (var i = _urlHistory.Count - 1; i >= 0; i--)
+        {
+            if (string.Equals(_urlHistory[i], trimmed, StringComparison.OrdinalIgnoreCase))
+                _urlHistory.RemoveAt(i);
+        }
+
+        _urlHistory.Insert(0, trimmed);
+        while (_urlHistory.Count > MaxUrlHistory)
+            _urlHistory.RemoveAt(_urlHistory.Count - 1);
     }
 
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
@@ -218,6 +264,146 @@ public partial class MainWindow : Window
         settings.ShowDialog();
     }
 
+    private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_updateBusy)
+            return;
+
+        if (_pendingUpdate is { UpdateAvailable: true, DownloadUrl: not null })
+        {
+            await InstallPendingUpdateAsync(_pendingUpdate);
+            return;
+        }
+
+        await CheckForUpdatesAsync(silent: false);
+    }
+
+    private async Task CheckForUpdatesAsync(bool silent)
+    {
+        if (_updateBusy)
+            return;
+
+        _updateBusy = true;
+        UpdateButton.IsEnabled = false;
+        if (!silent)
+            UpdateButton.Content = "Checking…";
+
+        try
+        {
+            var result = await _updateService.CheckForUpdatesAsync();
+            if (!result.Succeeded)
+            {
+                SetUpdateButtonIdle();
+                if (!silent)
+                {
+                    MessageBox.Show(
+                        this,
+                        result.ErrorMessage ?? "Could not check for updates.",
+                        "Updates",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+
+                return;
+            }
+
+            if (result.UpdateAvailable)
+            {
+                _pendingUpdate = result;
+                SetUpdateButtonReady(result.LatestVersion);
+                return;
+            }
+
+            SetUpdateButtonIdle();
+            if (!silent)
+            {
+                MessageBox.Show(
+                    this,
+                    $"You're up to date (v{result.CurrentVersion}).",
+                    "Updates",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+        }
+        catch (Exception ex)
+        {
+            SetUpdateButtonIdle();
+            if (!silent)
+            {
+                MessageBox.Show(
+                    this,
+                    ex.Message,
+                    "Updates",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+        finally
+        {
+            _updateBusy = false;
+            UpdateButton.IsEnabled = true;
+        }
+    }
+
+    private async Task InstallPendingUpdateAsync(UpdateCheckResult update)
+    {
+        if (string.IsNullOrWhiteSpace(update.DownloadUrl))
+            return;
+
+        var confirm = new UpdateConfirmWindow(update, AppThemes.GetById(_themeId))
+        {
+            Owner = this
+        };
+
+        if (confirm.ShowDialog() != true)
+            return;
+
+        _updateBusy = true;
+        UpdateButton.IsEnabled = false;
+        PersistSession();
+
+        try
+        {
+            var progress = new Progress<string>(status => UpdateButton.Content = status);
+            await _updateService.ApplyUpdateAsync(update.DownloadUrl, progress);
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                $"Update failed: {ex.Message}",
+                "Update app",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            SetUpdateButtonReady(update.LatestVersion);
+            UpdateButton.IsEnabled = true;
+            _updateBusy = false;
+        }
+    }
+
+    private void SetUpdateButtonIdle()
+    {
+        _pendingUpdate = null;
+        UpdateButton.Content = "Check for updates";
+        UpdateButton.Background = (Brush)FindResource("ControlBackgroundBrush");
+        UpdateButton.Foreground = (Brush)FindResource("PrimaryTextBrush");
+        UpdateButton.BorderBrush = (Brush)FindResource("ControlBorderBrush");
+        UpdateButton.BorderThickness = new Thickness(1);
+        UpdateButton.ToolTip = $"Current version v{UpdateService.GetCurrentVersion()}";
+    }
+
+    private void SetUpdateButtonReady(string? latestVersion)
+    {
+        UpdateButton.Content = "Update app";
+        UpdateButton.Background = new SolidColorBrush(Color.FromRgb(0x11, 0x18, 0x27));
+        UpdateButton.Foreground = Brushes.White;
+        UpdateButton.BorderThickness = new Thickness(0);
+        UpdateButton.ToolTip = string.IsNullOrWhiteSpace(latestVersion)
+            ? "An update is ready to download"
+            : $"Update to v{latestVersion}";
+    }
+
     private void ApplyTheme(AppTheme theme)
     {
         SetBrush("WindowBackgroundBrush", theme.WindowBackground);
@@ -233,12 +419,46 @@ public partial class MainWindow : Window
         SetBrush("ControlBackgroundBrush", theme.ControlBackground);
         SetBrush("ControlBorderBrush", theme.ControlBorder);
 
+        // Override system brushes used by leftover default control chrome.
+        Resources[SystemColors.WindowBrushKey] = theme.ControlBackgroundBrush;
+        Resources[SystemColors.WindowTextBrushKey] = theme.PrimaryTextBrush;
+        Resources[SystemColors.ControlBrushKey] = theme.ControlBackgroundBrush;
+        Resources[SystemColors.ControlTextBrushKey] = theme.PrimaryTextBrush;
+        Resources[SystemColors.ControlLightBrushKey] = theme.SurfaceBackgroundBrush;
+        Resources[SystemColors.ControlLightLightBrushKey] = theme.PanelBackgroundBrush;
+        Resources[SystemColors.ControlDarkBrushKey] = theme.BorderBrush;
+        Resources[SystemColors.GrayTextBrushKey] = theme.SecondaryTextBrush;
+        Resources[SystemColors.HighlightBrushKey] = theme.AccentBrush;
+        Resources[SystemColors.HighlightTextBrushKey] = theme.AccentTextBrush;
+
         Background = theme.WindowBackgroundBrush;
         SendButton.Background = theme.AccentBrush;
         SendButton.Foreground = theme.AccentTextBrush;
+        BodyEditor.Foreground = theme.PrimaryTextBrush;
+        BodyEditor.Background = Brushes.Transparent;
+        BodyEditor.LineNumbersForeground = theme.SecondaryTextBrush;
         ResponseBodyEditor.Foreground = theme.PrimaryTextBrush;
         ResponseBodyEditor.Background = Brushes.Transparent;
         ResponseBodyEditor.LineNumbersForeground = theme.SecondaryTextBrush;
+
+        if (_pendingUpdate is { UpdateAvailable: true })
+            SetUpdateButtonReady(_pendingUpdate.LatestVersion);
+        else
+            SetUpdateButtonIdle();
+
+        RefreshBodyHighlighting();
+        RefreshResponseHighlighting();
+    }
+
+    private void RefreshResponseHighlighting()
+    {
+        if (ResponseBodyEditor is null || string.IsNullOrWhiteSpace(ResponseBodyEditor.Text))
+            return;
+
+        ResponseBodyEditor.SyntaxHighlighting = SyntaxHighlighting.ForBody(
+            ResponseBodyEditor.Text,
+            contentType: null,
+            dark: AppThemes.GetById(_themeId).IsDark);
     }
 
     private void SetBrush(string key, Color color)
@@ -279,13 +499,22 @@ public partial class MainWindow : Window
         PersistSession();
     }
 
-    private void RemoveHeader_Click(object sender, RoutedEventArgs e)
+    private void DeleteHeaderRow_Click(object sender, RoutedEventArgs e)
     {
-        if (HeadersGrid.SelectedItem is HeaderItem selected)
+        if (sender is not FrameworkElement element)
+            return;
+
+        // The DataGrid "new item" placeholder isn't a real header row.
+        if (element.DataContext is not HeaderItem item)
         {
-            _headers.Remove(selected);
-            PersistSession();
+            e.Handled = true;
+            return;
         }
+
+        HeadersGrid.CancelEdit();
+        _headers.Remove(item);
+        PersistSession();
+        e.Handled = true;
     }
 
     private void AuthMode_Changed(object sender, RoutedEventArgs e)
@@ -322,6 +551,7 @@ public partial class MainWindow : Window
 
         try
         {
+            RememberUrl(UrlBox.Text);
             PersistSession();
             var request = BuildRequest();
             var response = await _httpService.SendAsync(request);
@@ -359,13 +589,24 @@ public partial class MainWindow : Window
             Method = method,
             Url = UrlBox.Text?.Trim() ?? string.Empty,
             Headers = headers,
-            Body = BodyBox.Text,
+            Body = BodyEditor.Text,
             AuthMode = authMode,
             BearerToken = BearerTokenBox.Text,
             ApiKey = ApiKeyBox.Text,
             ApiSecret = ApiSecretBox.Text,
             ApiKeyLocation = apiKeyLocation
         };
+    }
+
+    private void RefreshBodyHighlighting()
+    {
+        if (BodyEditor is null)
+            return;
+
+        BodyEditor.SyntaxHighlighting = SyntaxHighlighting.ForBody(
+            BodyEditor.Text,
+            contentType: null,
+            dark: AppThemes.GetById(_themeId).IsDark);
     }
 
     private void RenderResponse(ApiResponse response)
@@ -381,7 +622,10 @@ public partial class MainWindow : Window
         }
 
         var formatted = JsonFormatter.TryPrettyPrint(response.Body, response.ContentType);
-        ResponseBodyEditor.SyntaxHighlighting = SyntaxHighlighting.ForBody(formatted, response.ContentType);
+        ResponseBodyEditor.SyntaxHighlighting = SyntaxHighlighting.ForBody(
+            formatted,
+            response.ContentType,
+            dark: AppThemes.GetById(_themeId).IsDark);
         ResponseBodyEditor.Text = formatted;
         ResponseHeadersBox.Text = string.Join(
             Environment.NewLine,
@@ -397,6 +641,7 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _httpService.Dispose();
+        _updateService.Dispose();
         base.OnClosed(e);
     }
 }

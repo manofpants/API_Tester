@@ -19,6 +19,7 @@ public sealed class AppTheme
     public required Color Splitter { get; init; }
     public required Color ControlBackground { get; init; }
     public required Color ControlBorder { get; init; }
+    public required bool IsDark { get; init; }
 
     public SolidColorBrush WindowBackgroundBrush => Solid(WindowBackground);
     public SolidColorBrush PanelBackgroundBrush => Solid(PanelBackground);
@@ -59,7 +60,8 @@ public static class AppThemes
         Border = Color.FromRgb(0xD0, 0xD4, 0xDB),
         Splitter = Color.FromRgb(0xD0, 0xD4, 0xDB),
         ControlBackground = Colors.White,
-        ControlBorder = Color.FromRgb(0xC5, 0xC9, 0xD0)
+        ControlBorder = Color.FromRgb(0xC5, 0xC9, 0xD0),
+        IsDark = false
     };
 
     public static readonly AppTheme Dark = new()
@@ -67,18 +69,19 @@ public static class AppThemes
         Id = "dark",
         Name = "Dark",
         Description = "Dark charcoal with bright blue accents",
-        WindowBackground = Color.FromRgb(0x1A, 0x1D, 0x23),
-        PanelBackground = Color.FromRgb(0x24, 0x28, 0x30),
-        SurfaceBackground = Color.FromRgb(0x2B, 0x30, 0x3A),
-        StatusBackground = Color.FromRgb(0x32, 0x37, 0x42),
-        PrimaryText = Color.FromRgb(0xE8, 0xEA, 0xED),
-        SecondaryText = Color.FromRgb(0xA0, 0xA6, 0xB0),
-        Accent = Color.FromRgb(0x3B, 0x82, 0xF6),
-        AccentText = Colors.White,
-        Border = Color.FromRgb(0x3A, 0x40, 0x4C),
-        Splitter = Color.FromRgb(0x3A, 0x40, 0x4C),
-        ControlBackground = Color.FromRgb(0x2B, 0x30, 0x3A),
-        ControlBorder = Color.FromRgb(0x4A, 0x51, 0x5E)
+        WindowBackground = Color.FromRgb(0x12, 0x14, 0x18),
+        PanelBackground = Color.FromRgb(0x1C, 0x1F, 0x26),
+        SurfaceBackground = Color.FromRgb(0x25, 0x29, 0x31),
+        StatusBackground = Color.FromRgb(0x2F, 0x34, 0x3E),
+        PrimaryText = Color.FromRgb(0xF3, 0xF4, 0xF6),
+        SecondaryText = Color.FromRgb(0xC4, 0xC9, 0xD2),
+        Accent = Color.FromRgb(0x60, 0xA5, 0xFA),
+        AccentText = Color.FromRgb(0x0B, 0x12, 0x20),
+        Border = Color.FromRgb(0x4B, 0x53, 0x63),
+        Splitter = Color.FromRgb(0x4B, 0x53, 0x63),
+        ControlBackground = Color.FromRgb(0x2A, 0x2F, 0x38),
+        ControlBorder = Color.FromRgb(0x5B, 0x64, 0x75),
+        IsDark = true
     };
 
     public static readonly AppTheme Ocean = new()
@@ -97,7 +100,8 @@ public static class AppThemes
         Border = Color.FromRgb(0xB7, 0xCF, 0xD9),
         Splitter = Color.FromRgb(0xB7, 0xCF, 0xD9),
         ControlBackground = Colors.White,
-        ControlBorder = Color.FromRgb(0xA8, 0xC2, 0xCD)
+        ControlBorder = Color.FromRgb(0xA8, 0xC2, 0xCD),
+        IsDark = false
     };
 
     public static readonly AppTheme HighContrast = new()
@@ -116,11 +120,14 @@ public static class AppThemes
         Border = Color.FromRgb(0x66, 0x66, 0x66),
         Splitter = Color.FromRgb(0x66, 0x66, 0x66),
         ControlBackground = Color.FromRgb(0x1A, 0x1A, 0x1A),
-        ControlBorder = Color.FromRgb(0x88, 0x88, 0x88)
+        ControlBorder = Color.FromRgb(0x88, 0x88, 0x88),
+        IsDark = true
     };
 
-    public static IReadOnlyList<AppTheme> All { get; } = [Light, Dark, Ocean, HighContrast];
+    public static IReadOnlyList<AppTheme> All { get; } = [Ocean, Light, Dark, HighContrast];
+
+    public static AppTheme Default => Ocean;
 
     public static AppTheme GetById(string? id) =>
-        All.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase)) ?? Light;
+        All.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase)) ?? Default;
 }

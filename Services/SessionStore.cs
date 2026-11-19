@@ -30,7 +30,8 @@ public sealed class SavedSession
     public string? WindowState { get; set; }
     public double? RequestSectionHeight { get; set; }
     public double? ResponseSectionHeight { get; set; }
-    public string Theme { get; set; } = "light";
+    public string Theme { get; set; } = "ocean";
+    public List<string> UrlHistory { get; set; } = new();
 }
 
 public static class SessionStore

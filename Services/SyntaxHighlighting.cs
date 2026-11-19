@@ -6,14 +6,13 @@ namespace ApiTester.Services;
 
 public static class SyntaxHighlighting
 {
-    private static IHighlightingDefinition? _json;
+    private static IHighlightingDefinition? _jsonLight;
+    private static IHighlightingDefinition? _jsonDark;
 
-    public static IHighlightingDefinition? Json => _json ??= LoadJson();
-
-    public static IHighlightingDefinition? ForBody(string body, string? contentType)
+    public static IHighlightingDefinition? ForBody(string body, string? contentType, bool dark = false)
     {
         if (IsJson(body, contentType))
-            return Json;
+            return dark ? JsonDark : JsonLight;
 
         if (!string.IsNullOrWhiteSpace(contentType))
         {
@@ -46,16 +45,23 @@ public static class SyntaxHighlighting
         return trimmed.StartsWith('{') || trimmed.StartsWith('[');
     }
 
-    private static IHighlightingDefinition? LoadJson()
+    private static IHighlightingDefinition JsonLight =>
+        _jsonLight ??= LoadDefinition("Json", "pack://application:,,,/Resources/Json.xshd");
+
+    private static IHighlightingDefinition JsonDark =>
+        _jsonDark ??= LoadDefinition("JsonDark", "pack://application:,,,/Resources/JsonDark.xshd");
+
+    private static IHighlightingDefinition LoadDefinition(string name, string packUri)
     {
-        var uri = new Uri("pack://application:,,,/Resources/Json.xshd");
+        var uri = new Uri(packUri);
         using var stream = System.Windows.Application.GetResourceStream(uri)?.Stream;
         if (stream is null)
-            return HighlightingManager.Instance.GetDefinition("JavaScript");
+            return HighlightingManager.Instance.GetDefinition("JavaScript")
+                   ?? throw new InvalidOperationException($"Missing highlighting definition: {name}");
 
         using var reader = XmlReader.Create(stream);
         var definition = HighlightingLoader.Load(reader, HighlightingManager.Instance);
-        HighlightingManager.Instance.RegisterHighlighting("Json", [".json"], definition);
+        HighlightingManager.Instance.RegisterHighlighting(name, [".json"], definition);
         return definition;
     }
 }
